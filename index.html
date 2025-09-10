@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Conversational CV – Qawser Qayoom</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1c1c1c, #2d2d2d);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 480px;
+      height: 90vh;
+      background: #111;
+      border: 2px solid #d4af37;
+      border-radius: 18px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: linear-gradient(90deg, #d4af37, #f5e17a);
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      color: #222;
+      letter-spacing: 1px;
+    }
+    .chat-box {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #1c1c1c;
+    }
+    .message {
+      margin: 12px 0;
+      padding: 12px 16px;
+      border-radius: 16px;
+      max-width: 75%;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+    .user-msg {
+      background: linear-gradient(135deg, #f5e17a, #d4af37);
+      color: #222;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+      font-weight: 500;
+    }
+    .bot-msg {
+      background: #2b2b2b;
+      color: #f5f5f5;
+      border: 1px solid #d4af37;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #444;
+      background: #222;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      font-size: 1rem;
+      background: #222;
+      color: #fff;
+    }
+    .chat-input button {
+      background: #d4af37;
+      color: #111;
+      border: none;
+      padding: 0 24px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .chat-input button:hover {
+      background: #f5e17a;
+    }
+    .chat-input input:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">💼 Conversational CV – Qawser Qayoom</div>
+    <div id="chat-box" class="chat-box"></div>
+    <div class="chat-input">
+      <input id="user-input" type="text" placeholder="Type your question..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+<script>
+const SCRIPTED_QA = [
+  // ======================
+  // Intro & Personal Fit
+  // ======================
+  {q:/\b(tell me about yourself|introduce yourself)\b/i,
+   a:"I’m Qawser Qayoom, a BBA graduate and retail business professional from Kashmir. I combine store operations experience with business development and marketing. At Mir Electronics, I increased customer footfall by 35% and built SmartRetail-Kit, an AI toolkit to simplify reporting and campaigns."}, // Q1
+
+  {q:/\b(what are your strengths|strengths)\b/i,
+   a:"My strengths are people-first leadership, data-driven decision making, and creative retail campaigns. I can balance operations with innovation, ensuring growth while keeping customers at the center."}, // Q2
+
+  {q:/\b(what are your weaknesses|weakness)\b/i,
+   a:"I sometimes get too hands-on when fixing operational issues. Over time, I’ve learned to delegate more by building SOPs and training staff, which ensures sustainability."}, // Q3
+
+  {q:/\b(why should we hire you)\b/i,
+   a:"I bring a blend of retail experience, marketing creativity, and practical innovation. I’ve driven measurable growth and built small AI tools that save time — so your team gets both execution and efficiency."}, // Q4
+
+  {q:/\b(why middle east|why work here)\b/i,
+   a:"The Middle East retail market is dynamic and fast-growing. I want to contribute my skills in operations and marketing to such a market, while also learning from its scale and diversity."}, // Q5
+
+  {q:/\b(what motivates you)\b/i,
+   a:"I’m motivated by creating real-world impact: seeing a campaign fill a store with customers or a small process change save hours of work inspires me to keep innovating."}, // Q6
+
+  {q:/\b(career goals|future goals)\b/i,
+   a:"In the short term, I aim to join a growth-driven retail or business development role. In the long term, I want to lead multi-store operations and scale digital innovation in retail."}, // Q7
+
+  {q:/\b(unique|different from others)\b/i,
+   a:"I bridge traditional retail experience with digital innovation. Most candidates focus on one side — I bring proven sales impact plus the ability to automate and innovate."}, // Q8
+
+  {q:/\b(describe yourself)\b/i,
+   a:"I’d describe myself as practical, adaptable, and people-focused. I lead by example, use data for decisions, and keep customer satisfaction as the north star."}, // Q9
+
+  {q:/\b(what inspires you)\b/i,
+   a:"I’m inspired by seeing small businesses thrive. Supporting local stores with innovative campaigns or tools gives me a sense of purpose."}, // Q10
+
+  // ======================
+  // Experience: Mir Electronics
+  // ======================
+  {q:/\b(mir electronics|experience mir)\b/i,
+   a:"At Mir Electronics, I managed store operations, led marketing campaigns, trained staff, and improved service efficiency. My work increased footfall by 35% and improved turnaround time by 30%."}, // Q11
+
+  {q:/\b(responsibilities mir)\b/i,
+   a:"Responsibilities included inventory management, vendor coordination, staff coaching, marketing promotions, and implementing SOPs for smoother service."}, // Q12
+
+  {q:/\b(how did you increase footfall)\b/i,
+   a:"I designed a 7-day digital campaign with WhatsApp promotions, local outreach, and targeted deals. This attracted new customers and boosted walk-ins by 35%."}, // Q13
+
+  {q:/\b(inventory management)\b/i,
+   a:"I tracked stock closely, improved reorder points, and communicated regularly with vendors to reduce stockouts and delays."}, // Q14
+
+  {q:/\b(staff training)\b/i,
+   a:"I trained staff using SOPs, roleplay for customer greetings, and quick billing practice. This improved service quality and confidence."}, // Q15
+
+  {q:/\b(challenges mir)\b/i,
+   a:"One challenge was a vendor delay. I solved it by negotiating partial deliveries, promoting available products, and managing customer expectations."}, // Q16
+
+  {q:/\b(duration mir)\b/i,
+   a:"I worked at Mir Electronics from Dec 2019 to Sep 2021, and then rejoined in July 2024 to continue business development and operations."}, // Q17
+
+  {q:/\b(biggest impact mir)\b/i,
+   a:"My biggest impact was the combination of improved SOPs and targeted campaigns, which drove customer satisfaction and sustainable revenue growth."}, // Q18
+
+  {q:/\b(team management mir)\b/i,
+   a:"I led a small team, focused on clarity of roles, and gave recognition for performance. This built trust and reduced turnover."}, // Q19
+
+  {q:/\b(mistake mir)\b/i,
+   a:"Early on, I underestimated the impact of daily stock checks. After missing one reorder, I created a strict checklist and trained the team, which eliminated the problem."}, // Q20
+
+  // ======================
+  // Experience: Bajaj Allianz
+  // ======================
+  {q:/\b(bajaj allianz|bajaj experience)\b/i,
+   a:"I attended a short-term Bajaj Allianz workshop focused on customer communication and needs-based selling. It improved my ability to listen, empathize, and build trust with clients."}, // Q21
+
+  {q:/\b(what did you learn at bajaj)\b/i,
+   a:"I learned structured follow-ups, empathetic communication, and presenting solutions clearly — skills that helped me later in retail sales."}, // Q22
+
+  {q:/\b(star certificate)\b/i,
+   a:"I received a Star Certificate during my Bajaj Allianz program for demonstrating strong customer communication and sales performance."}, // Q23
+
+  {q:/\b(duration bajaj)\b/i,
+   a:"It was a short-term workshop experience, designed to provide exposure to insurance sales techniques and customer engagement."}, // Q24
+
+  {q:/\b(difference bajaj vs mir)\b/i,
+   a:"Bajaj was theoretical and training-based, focused on sales techniques, while Mir was practical, running a full retail store. Both complemented each other."}, // Q25
+
+  // ======================
+  // Projects & Achievements
+  // ======================
+  {q:/\b(smartretail kit|smart retail)\b/i,
+   a:"SmartRetail-Kit is an AI-powered toolkit I developed to help small retailers automate reporting, create campaign content, and get quick sales insights using Excel and Streamlit."}, // Q26
+
+  {q:/\b(use of smartretail)\b/i,
+   a:"It saves hours of manual work by automating repetitive reporting, and it helps generate marketing messages for WhatsApp or social campaigns."}, // Q27
+
+  {q:/\b(power up your life|7-day campaign)\b/i,
+   a:"‘Power Up Your Life’ was a 7-day campaign with themed offers, WhatsApp promotions, and social content. It increased engagement and brought in measurable footfall."}, // Q28
+
+  {q:/\b(achievements)\b/i,
+   a:"Achievements include: +35% store footfall at Mir, +30% service efficiency from SOPs, SmartRetail-Kit creation, Star Certificate at Bajaj, and representing J&K at state-level Kabaddi."}, // Q29
+
+  {q:/\b(proud moment)\b/i,
+   a:"My proudest moment was when a campaign I designed not only boosted sales but also brought repeat customers, proving sustainable impact."}, // Q30
+
+  {q:/\b(measure success)\b/i,
+   a:"I measure success through numbers (sales, footfall, service KPIs) and customer feedback (repeat visits, satisfaction)."}, // Q31
+
+  {q:/\b(dashboards)\b/i,
+   a:"I built simple Streamlit and Excel dashboards to track daily sales, campaign performance, and inventory signals for decision-making."}, // Q32
+
+  {q:/\b(biggest project)\b/i,
+   a:"My biggest project so far is SmartRetail-Kit, because it combined business experience with AI tools to help retailers."}, // Q33
+
+  {q:/\b(new idea project)\b/i,
+   a:"One idea is to expand SmartRetail-Kit into a SaaS model where local retailers can subscribe and use templates without coding."}, // Q34
+
+  {q:/\b(successful campaign)\b/i,
+   a:"The ‘Power Up Your Life’ campaign was successful because it combined daily engagement, customer interaction, and measurable outcomes."}, // Q35
+
+  // ======================
+  // Leadership & Teamwork
+  // ======================
+  {q:/\b(leadership style)\b/i,
+   a:"My leadership style is people-first: I focus on clarity, coaching, and creating ownership. I set clear goals but allow autonomy with support."}, // Q36
+
+  {q:/\b(conflict handling)\b/i,
+   a:"I handle conflicts by listening to both sides, identifying the root cause, and resolving quickly with clear next steps."}, // Q37
+
+  {q:/\b(motivate team)\b/i,
+   a:"I motivate by celebrating small wins, giving recognition, and creating opportunities for staff to take ownership."}, // Q38
+
+  {q:/\b(team building)\b/i,
+   a:"I build teams by hiring for attitude, providing role-based training, and fostering open communication."}, // Q39
+
+  {q:/\b(delegation)\b/i,
+   a:"I delegate by explaining the why behind tasks, setting metrics, and following up with quick check-ins."}, // Q40
+
+  {q:/\b(feedback style)\b/i,
+   a:"I give immediate, constructive feedback, paired with recognition. My goal is to correct issues while keeping morale high."}, // Q41
+
+  {q:/\b(onboarding staff)\b/i,
+   a:"I onboard staff with short SOPs, shadowing, and 3-day check-ins to build confidence quickly."}, // Q42
+
+  {q:/\b(underperforming staff)\b/i,
+   a:"I first identify if it’s a skill gap or motivation issue. Then I train, coach, or reassign depending on the cause."}, // Q43
+
+  {q:/\b(example of leadership)\b/i,
+   a:"At Mir Electronics, I led a small team to adopt SOPs. Initially resisted, but by showing benefits and coaching, the team embraced it and performance improved."}, // Q44
+
+  {q:/\b(example teamwork)\b/i,
+   a:"During a campaign, I coordinated with vendors, staff, and marketing channels. The alignment led to a successful 35% increase in footfall."}, // Q45
+
+  // ======================
+  // Business Development & Sales
+  // ======================
+  {q:/\b(business development|bd strategies)\b/i,
+   a:"My business development approach is local-first: building partnerships, creating targeted promotions, and testing small campaigns that can scale if they succeed."}, // Q46
+
+  {q:/\b(sales approach|sales techniques)\b/i,
+   a:"I use needs-based selling — asking questions, listening, and recommending solutions that truly fit the customer instead of pushing products."}, // Q47
+
+  {q:/\b(handle objections)\b/i,
+   a:"I acknowledge customer concerns, validate them, and then show a small proof point — such as a demo, guarantee, or previous success story."}, // Q48
+
+  {q:/\b(vendor negotiation|vendor management)\b/i,
+   a:"I focus on win-win deals: ensuring reliable deliveries and offering timely payments in return for better terms or discounts."}, // Q49
+
+  {q:/\b(customer retention|retain customers)\b/i,
+   a:"Retention comes from follow-ups, loyalty incentives, and tracking repeat customers. I also use WhatsApp to keep connections warm."}, // Q50
+
+  {q:/\b(pricing strategy)\b/i,
+   a:"I benchmark competitors, then add promotional windows or bundles to stay competitive while maintaining margins."}, // Q51
+
+  {q:/\b(set targets)\b/i,
+   a:"I set incremental targets based on baseline performance, aiming for 10–20% improvements with each campaign."}, // Q52
+
+  {q:/\b(expand business|growth strategy)\b/i,
+   a:"I’d expand by combining community marketing with data-driven campaigns, ensuring growth is both scalable and measurable."}, // Q53
+
+  {q:/\b(no budget sales growth)\b/i,
+   a:"With no budget, I’d rely on community outreach, referral programs, and WhatsApp/Telegram campaigns that cost nothing but time."}, // Q54
+
+  {q:/\b(example sales success)\b/i,
+   a:"At Mir Electronics, I launched a targeted 7-day campaign that brought a 35% increase in customer footfall, driving both sales and brand visibility."}, // Q55
+
+  // ======================
+  // Marketing & Digital
+  // ======================
+  {q:/\b(digital marketing|digital campaign)\b/i,
+   a:"I design campaigns with clear themes, channels, and KPIs. For example, a 7-day structured plan with WhatsApp and Instagram boosted engagement significantly."}, // Q56
+
+  {q:/\b(content creation)\b/i,
+   a:"I use Canva AI for visuals, ChatGPT for copy drafts, and then refine them to match customer tone and local culture."}, // Q57
+
+  {q:/\b(channels|best channels)\b/i,
+   a:"WhatsApp for local customers, Instagram for visuals, and Telegram for deals worked best in my experience."}, // Q58
+
+  {q:/\b(community management)\b/i,
+   a:"I managed WhatsApp and Telegram groups, replied to queries, and used flash deals to keep engagement high."}, // Q59
+
+  {q:/\b(marketing roi)\b/i,
+   a:"I calculate ROI by comparing additional sales and footfall generated vs. the campaign cost. Tracking is done through dashboards."}, // Q60
+
+  {q:/\b(example creative idea)\b/i,
+   a:"I created daily themes like 'Tech Tuesday' and 'Flash Friday' which increased excitement and repeat visits during campaigns."}, // Q61
+
+  {q:/\b(marketing innovation)\b/i,
+   a:"My innovation is combining low-cost tools like WhatsApp marketing with AI-generated content, making campaigns faster and more effective."}, // Q62
+
+  {q:/\b(brand building)\b/i,
+   a:"I build brand presence by ensuring consistent visuals, authentic customer engagement, and measurable impact on reputation."}, // Q63
+
+  {q:/\b(customer engagement)\b/i,
+   a:"I keep customers engaged through contests, loyalty ideas, and direct replies. Small acknowledgments build long-term trust."}, // Q64
+
+  {q:/\b(example marketing failure)\b/i,
+   a:"Once, a campaign started weak because timing was off. I adjusted content and offers mid-way, which saved it by the end of the week."}, // Q65
+
+  // ======================
+  // Skills & Education
+  // ======================
+  {q:/\b(technical skills)\b/i,
+   a:"I’m skilled in Excel, Python basics, Streamlit dashboards, Canva AI, ChatGPT for automation, and WhatsApp Business tools."}, // Q66
+
+  {q:/\b(education|degree)\b/i,
+   a:"I hold a BBA from Punjab Technical University (2021–2024), where I focused on marketing, strategy, HR, and finance."}, // Q67
+
+  {q:/\b(languages)\b/i,
+   a:"I speak English (professional), Hindi/Urdu (fluent), Kashmiri (native), and basic conversational Arabic."}, // Q68
+
+  {q:/\b(ms office|excel)\b/i,
+   a:"I use Excel daily for sales tracking, dashboards, and reporting. I’ve built templates for inventory and campaign monitoring."}, // Q69
+
+  {q:/\b(soft skills)\b/i,
+   a:"My soft skills include communication, adaptability, leadership, teamwork, and problem-solving."}, // Q70
+
+  {q:/\b(multitasking)\b/i,
+   a:"I prioritize tasks by urgency and impact. Multitasking for me means structured switching — not chaos."}, // Q71
+
+  {q:/\b(learning new skills)\b/i,
+   a:"I constantly explore new tools. Recently, I learned to use Streamlit to build dashboards for campaign performance."}, // Q72
+
+  {q:/\b(teamwork skills)\b/i,
+   a:"I collaborate by ensuring clear roles, listening actively, and stepping in to support when needed."}, // Q73
+
+  {q:/\b(self improvement)\b/i,
+   a:"I improve by reading business/tech resources, testing tools hands-on, and seeking feedback from peers."}, // Q74
+
+  {q:/\b(favorite subject)\b/i,
+   a:"In BBA, I enjoyed marketing the most — especially campaign design and customer behavior analysis."} // Q75
+  // ======================
+  // Behavioral / Situational
+  // ======================
+  {q:/\b(handle failure)\b/i,
+   a:"I treat failure as feedback. For example, when a campaign underperformed, I reviewed data, adjusted offers, and improved timing to recover results."}, // Q76
+
+  {q:/\b(work under pressure)\b/i,
+   a:"I stay calm, prioritize urgent issues, and break work into smaller tasks. This ensures focus instead of stress."}, // Q77
+
+  {q:/\b(adapt to change)\b/i,
+   a:"I adapt by focusing on the essentials, communicating with my team, and adjusting strategy quickly based on new realities."}, // Q78
+
+  {q:/\b(conflict resolution)\b/i,
+   a:"I resolve conflicts by listening, clarifying misunderstandings, and aligning on a shared goal. This has worked well in team settings."}, // Q79
+
+  {q:/\b(decision making)\b/i,
+   a:"I base decisions on data when possible, and when data is unclear, I run small experiments to reduce risk."}, // Q80
+
+  {q:/\b(lead change)\b/i,
+   a:"I led change at Mir by introducing SOPs. Initially resisted, but by explaining benefits and coaching, the team adopted them."}, // Q81
+
+  {q:/\b(example of innovation)\b/i,
+   a:"Building SmartRetail-Kit was my key innovation — blending AI tools with retail needs to save time and improve campaigns."}, // Q82
+
+  {q:/\b(example of risk)\b/i,
+   a:"I once took a risk launching a new campaign format. The first days were slow, but adjustments paid off by the end of the week."}, // Q83
+
+  {q:/\b(example problem solving)\b/i,
+   a:"A supplier delay risked stockouts. I solved it by negotiating partial delivery, adjusting promotions, and keeping customers informed."}, // Q84
+
+  {q:/\b(example teamwork)\b/i,
+   a:"During Kabaddi at state-level, I learned the value of discipline and coordination. The same teamwork mindset guides my retail leadership."}, // Q85
+
+  // ======================
+  // Personal Growth & Career Vision
+  // ======================
+  {q:/\b(where do you see yourself in 5 years)\b/i,
+   a:"In 5 years, I see myself leading regional retail operations, managing multiple stores, and scaling innovations like SmartRetail-Kit."}, // Q86
+
+  {q:/\b(role model|inspiration)\b/i,
+   a:"My role models are business leaders who built success by combining people-focus with innovation, like Ratan Tata for integrity and vision."}, // Q87
+
+  {q:/\b(how do you learn)\b/i,
+   a:"I learn by hands-on practice, experimenting with tools, and applying insights in real projects."}, // Q88
+
+  {q:/\b(what do you do outside work|hobbies)\b/i,
+   a:"I enjoy sports like Kabaddi, which taught me discipline and teamwork, and I explore AI tools to stay updated."}, // Q89
+
+  {q:/\b(biggest lesson learned)\b/i,
+   a:"The biggest lesson I’ve learned is that small, consistent improvements deliver bigger results than one-off big ideas."}, // Q90
+
+  {q:/\b(why business development)\b/i,
+   a:"Because it’s about both creativity and measurable results — crafting strategies that turn into numbers is what excites me."}, // Q91
+
+  {q:/\b(why retail)\b/i,
+   a:"Retail is dynamic and customer-facing. Every action has immediate impact, making it a powerful space for innovation and growth."}, // Q92
+
+  {q:/\b(what do you value at work)\b/i,
+   a:"Clarity, teamwork, and growth opportunities. A workplace that balances structure with innovation is ideal for me."}, // Q93
+
+  {q:/\b(dream role)\b/i,
+   a:"My dream role is leading business development and operations at scale, using both leadership and AI-driven tools."}, // Q94
+
+  {q:/\b(final message|closing statement)\b/i,
+   a:"I’m Qawser Qayoom — passionate about retail growth, people-first leadership, and innovative solutions. I look forward to bringing this energy to your organization."}, // Q95
+
+  // ======================
+  // Human-like / Icebreaker Questions
+  // ======================
+  {q:/\b(who are you)\b/i,
+   a:"I’m Qawser Qayoom 👨‍💼, a retail business professional with a passion for growth, innovation, and helping businesses succeed."}, // Q96
+
+  {q:/\b(where are you from)\b/i,
+   a:"I’m from Baramulla, Jammu & Kashmir 🌍. Growing up here shaped my discipline and adaptability."}, // Q97
+
+  {q:/\b(how old are you|your age)\b/i,
+   a:"I was born in 2001, so I’m in my early 20s — young, energetic, and ready to grow 🚀."}, // Q98
+
+  {q:/\b(are you married|relationship)\b/i,
+   a:"Not yet — currently focused on building my career 👨‍💼✨."}, // Q99
+
+  {q:/\b(do you like sports|kabaddi)\b/i,
+   a:"Yes! I represented J&K at the state level in Kabaddi 🏆. Sports taught me teamwork, focus, and resilience."}, // Q100
+
+  {q:/\b(what are your hobbies)\b/i,
+   a:"I enjoy playing sports, exploring AI tools 🤖, and reading about business and leadership."}, // Q101
+
+  {q:/\b(what do you do in free time)\b/i,
+   a:"In my free time, I learn new tools, brainstorm business ideas, or play Kabaddi 🏐 to stay active."}, // Q102
+
+  {q:/\b(do you like traveling)\b/i,
+   a:"Yes, I love traveling 🌍. It teaches me new cultures and perspectives that I can apply in business."}, // Q103
+
+  {q:/\b(favorite place)\b/i,
+   a:"My favorite place so far is Gulmarg ⛰️ — peaceful, refreshing, and inspiring."}, // Q104
+
+  {q:/\b(favorite food)\b/i,
+   a:"I enjoy Kashmiri Wazwan 🍲 — it reminds me of my roots and culture."}, // Q105
+
+  {q:/\b(who inspired you)\b/i,
+   a:"I’m inspired by leaders who balance business with ethics ✨ — like Ratan Tata for his vision and integrity."}, // Q106
+
+  {q:/\b(what do your friends call you)\b/i,
+   a:"Most people call me Qawser 🙂. At work, I’m often seen as the one who brings ideas and solutions."}, // Q107
+
+  {q:/\b(are you flexible)\b/i,
+   a:"Yes, adaptability is one of my strengths 🌍. I can adjust quickly to new markets, roles, or challenges."}, // Q108
+
+  {q:/\b(what is your dream)\b/i,
+   a:"My dream is to build innovative retail solutions that empower businesses globally 🌍."}, // Q109
+
+  {q:/\b(what is your lucky number)\b/i,
+   a:"I’d say 7 🍀 — it has followed me in many of my achievements."}, // Q110
+
+  {q:/\b(what’s your star sign)\b/i,
+   a:"I’m Aquarius ♒ — known for curiosity and innovation, which fits my approach to work."}, // Q111
+
+  {q:/\b(are you an introvert|extrovert)\b/i,
+   a:"I’m more of an ambivert 🔄. I enjoy connecting with people but also value focus time for strategy and learning."}, // Q112
+
+  {q:/\b(what language do you speak at home)\b/i,
+   a:"At home, I speak Kashmiri 🏡. But professionally, I use English and Hindi/Urdu."}, // Q113
+
+  {q:/\b(favorite subject in school)\b/i,
+   a:"I always enjoyed Business Studies 📚, which eventually led me to pursue BBA."}, // Q114
+
+  {q:/\b(are you a leader or follower)\b/i,
+   a:"I’m naturally a leader 👨‍💼 — but I also know when to follow and learn."}, // Q115
+
+  {q:/\b(do you like technology)\b/i,
+   a:"Yes 🤖. I love exploring AI tools and using them to solve real business problems."}, // Q116
+
+  {q:/\b(what’s your favorite app)\b/i,
+   a:"Currently, Canva AI 🎨 and Streamlit 📊 — they help me create quickly and track performance."}, // Q117
+
+  {q:/\b(phone or laptop)\b/i,
+   a:"Both 📱💻 — phone for outreach and quick updates, laptop for dashboards and campaigns."}, // Q118
+
+  {q:/\b(what do you do on weekends)\b/i,
+   a:"I spend weekends learning, playing sports, or relaxing with family 👨‍👩‍👦."}, // Q119
+
+  {q:/\b(morning person|night owl)\b/i,
+   a:"Morning person 🌅. I like starting my day with clarity and focus."}, // Q120
+
+  {q:/\b(favorite book)\b/i,
+   a:"One book I like is 'Start With Why' by Simon Sinek 📖 — it shaped my leadership thinking."}, // Q121
+
+  {q:/\b(favorite quote)\b/i,
+   a:"“Leaders are not made in comfort. They are forged in resets.” 🔥"}, // Q122
+
+  {q:/\b(do you drink coffee|tea)\b/i,
+   a:"Tea ☕ — Kashmiri Kahwa especially."}, // Q123
+
+  {q:/\b(favorite color)\b/i,
+   a:"Royal Blue and Gold 💙✨ — strong, professional, and global."}, // Q124
+
+  {q:/\b(favorite movie)\b/i,
+   a:"I enjoy movies that inspire leadership and vision 🎬 — like 'The Pursuit of Happyness'."}, // Q125
+
+  {q:/\b(why your name is qawser)\b/i,
+   a:"My name Qawser means 'one who brings abundance' 🌊. It inspires me to live up to it by creating impact."}, // Q126
+
+  {q:/\b(do you like public speaking)\b/i,
+   a:"Yes 🎤. I’ve spoken in small groups during workshops and trainings — it energizes me."}, // Q127
+
+  {q:/\b(how do you dress for work)\b/i,
+   a:"I prefer formal or smart casual 👔 — professional yet approachable."}, // Q128
+
+  {q:/\b(do you believe in teamwork)\b/i,
+   a:"Absolutely 🤝. I’ve seen teamwork achieve results faster than individual effort."}, // Q129
+
+  {q:/\b(do you like challenges)\b/i,
+   a:"Yes 🚀. Challenges push me to grow and innovate."}, // Q130
+
+  {q:/\b(do you like helping people)\b/i,
+   a:"Yes 🌍. Helping customers and colleagues succeed motivates me every day."}, // Q131
+
+  {q:/\b(are you social)\b/i,
+   a:"I’m balanced 🤝 — I enjoy networking but also value focus time."}, // Q132
+
+  {q:/\b(are you emotional)\b/i,
+   a:"I’m empathetic 💙 — I understand people’s perspectives but keep emotions balanced in decisions."}, // Q133
+
+  {q:/\b(do you smile often)\b/i,
+   a:"Yes 🙂. A positive approach makes work smoother and relationships stronger."}, // Q134
+
+  {q:/\b(do you believe in luck)\b/i,
+   a:"I believe in preparation 🌟 — luck favors those who are ready."}, // Q135
+
+  {q:/\b(what drives you)\b/i,
+   a:"Impact 🌍. Knowing my work improves businesses and people’s lives keeps me going."}, // Q136
+
+  {q:/\b(biggest dream)\b/i,
+   a:"To lead a retail innovation company 🌍 that helps small businesses grow globally."}, // Q137
+
+  {q:/\b(favorite achievement)\b/i,
+   a:"Improving Mir Electronics’ footfall by 35% 🚀 — it showed how data and creativity deliver results."}, // Q138
+
+  {q:/\b(what do you do when sad)\b/i,
+   a:"I reflect, reset 🌅, and focus on the bigger picture — challenges are temporary."}, // Q139
+
+  {q:/\b(how do you celebrate success)\b/i,
+   a:"I celebrate by recognizing the team, sharing learnings, and planning the next challenge 🎉."}, // Q140
+
+  {q:/\b(favorite country)\b/i,
+   a:"I admire the UAE 🌍 for its growth and innovation in business."}, // Q141
+
+  {q:/\b(travel dream)\b/i,
+   a:"One day, I’d love to explore Europe 🌍 for its mix of history and modern business hubs."}, // Q142
+
+  {q:/\b(what keeps you awake)\b/i,
+   a:"Ideas 💡 — sometimes I can’t sleep because I’m thinking of new strategies or tools."}, // Q143
+
+  {q:/\b(best compliment received)\b/i,
+   a:"A mentor once said, 'You bring clarity in chaos' ✨ — that still motivates me."}, // Q144
+
+  {q:/\b(last message)\b/i,
+   a:"Thank you for exploring my profile 🙏🌍. I’m Qawser Qayoom — ready to create impact and grow together."} // Q145
+];
+   </script>
+    // ==============================
+
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender === "user" ? "user-msg" : "bot-msg");
+      msg.innerText = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      userInput.value = "";
+
+      // Match against Q&A
+      let response = "🤔 I don’t have an answer for that yet. Try another question!";
+      for (let pair of SCRIPTED_QA) {
+        if (pair.q.test(text)) {
+          response = pair.a;
+          break;
+        }
+      }
+      setTimeout(() => addMessage(response, "bot"), 400);
+    }
+
+    // Enter key support
+    userInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
